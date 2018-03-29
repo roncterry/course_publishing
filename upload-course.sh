@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# version: 1.0.0
-# data: 20180327
+# version: 1.0.4
+# data: 20180328
 
 source ./include/colors.sh
 source ./include/usage.sh
@@ -31,6 +31,7 @@ then
     exit 2
   else
     CONFIG_FILE_LIST=$(ls ${1})
+    CONFIG_FILE_DIR="${1}/"
   fi
 else
   if ! [ -e ${1} ]
@@ -56,7 +57,7 @@ fi
 ##############################################################################
 
 main() {
-  source ${CONFIG_FILE}
+  source ${CONFIG_FILE_DIR}${CONFIG_FILE}
 
   LAB_ENV_SRC_DIR="${COURSES_BASE_DIR}/${COURSE_ID}/${COURSE_VER}/lab_environment"
   PDF_SRC_DIR="${COURSES_BASE_DIR}/${COURSE_ID}/${COURSE_VER}/manuals_and_slides/pdf"

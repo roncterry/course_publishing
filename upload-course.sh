@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# version: 1.0.4
-# data: 20180328
+# version: 1.1.0
+# data: 20180816
 
 source ./include/colors.sh
 source ./include/usage.sh
@@ -71,7 +71,8 @@ main() {
     echo
   fi
 
-  COURSE_TMP_DIR="${COURSE_TMP_BASE_DIR}/${COURSE_ID}/${COURSE_VER}"
+  TIMESTAMP="$(date +%Y%m%d-%s)"
+  COURSE_TMP_DIR="${COURSE_TMP_BASE_DIR}/${COURSE_ID}-${COURSE_VER}_${TIMESTAMP}"
 
   test_for_required_vars
 

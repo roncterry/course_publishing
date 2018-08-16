@@ -1,6 +1,6 @@
 # Functions for the course publishing scripts
 #
-# version: 1.2.0
+# version: 1.3.0
 # date: 20180816
 #
 #  echo -e "${LTGREEN}COMMAND: ${GRAY}${NC}"
@@ -319,8 +319,8 @@ clean_up_tmp_files() {
   echo
   echo -e "${LTCYAN}Cleaning up staging files ...${NC}"
   echo -e "${LTCYAN}----------------------------------------------------------------${NC}"
-  echo -e "${LTGREEN}COMMAND: ${GRAY} rm -rf ${COURSE_TMP_BASE_DIR}/${COURSE_ID}/${NC}"
-  rm -rf ${COURSE_TMP_BASE_DIR}/${COURSE_ID}/
+  echo -e "${LTGREEN}COMMAND: ${GRAY} rm -rf ${COURSE_TMP_DIR}${NC}"
+  rm -rf ${COURSE_TMP_DIR}
   echo
 }
 

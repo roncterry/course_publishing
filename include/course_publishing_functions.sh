@@ -1,7 +1,7 @@
 # Functions for the course publishing scripts
 #
-# version: 1.0.0
-# date: 20180327
+# version: 1.2.0
+# date: 20180816
 #
 #  echo -e "${LTGREEN}COMMAND: ${GRAY}${NC}"
 
@@ -280,7 +280,14 @@ create_file_list() {
   do
     if [ -f ${FILE} ]
     then
-      echo ${SERVER_BASE_ACCESS_URL}/${COURSE_ID}/${FILE} | tee -a ${URL_FILE}
+      if echo ${FILE} | grep -Eq ".(mp4|MP4|mov|MOV|webm|WEBM|mkv|MKV)"
+      then
+        local FILE_DURATION=$(ffmpeg -i ${FILE} 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,//)
+        echo "${SERVER_BASE_ACCESS_URL}/${COURSE_ID}${COURSE_ID_APPEND}/${FILE},${FILE},${FILE_DURATION}" | tee -a ${URL_FILE}
+        unset FILE_DURATION
+      else
+        echo "${SERVER_BASE_ACCESS_URL}/${COURSE_ID}${COURSE_ID_APPEND}/${FILE},${FILE},-"| tee -a ${URL_FILE}
+      fi
     fi
   done
 
@@ -293,7 +300,15 @@ create_file_list() {
 
     for FILE in ${DIR_LIST}
     do 
-      echo ${SERVER_BASE_ACCESS_URL}/${COURSE_ID}/${DIR}/${FILE} | tee -a ${URL_FILE}
+      #echo ${SERVER_BASE_ACCESS_URL}/${COURSE_ID}/${DIR}/${FILE} | tee -a ${URL_FILE}
+      if echo ${FILE} | grep -Eq ".(mp4|MP4|mov|MOV|webm|WEBM|mkv|MKV)"
+      then
+        local FILE_DURATION=$(ffmpeg -i ${DIR}/${FILE} 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,//)
+        echo "${SERVER_BASE_ACCESS_URL}/${COURSE_ID}${COURSE_ID_APPEND}/${DIR}/${FILE},${FILE},${FILE_DURATION}" | tee -a ${URL_FILE}
+        unset FILE_DURATION
+      else
+        echo "${SERVER_BASE_ACCESS_URL}/${COURSE_ID}${COURSE_ID_APPEND}/${DIR}/${FILE},${FILE},-"| tee -a ${URL_FILE}
+      fi
     done
   done
   echo

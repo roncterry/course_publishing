@@ -1,7 +1,7 @@
 # Functions for the course publishing scripts
 #
-# version: 1.3.0
-# date: 20180816
+# version: 2.0.0
+# date: 20181101
 #
 #  echo -e "${LTGREEN}COMMAND: ${GRAY}${NC}"
 
@@ -59,6 +59,168 @@ gather_files_to_upload() {
 }
 
 
+replace_pdf_cover_pages() {
+  local NEW_LAB_MANUAL_COVER=$(ls COVER_LAB_MANUAL*.pdf)
+  local NEW_LECTURE_MANUAL_COVER=$(ls COVER_LECTURE_MANUAL*.pdf)
+
+  cd ${COURSE_TMP_DIR}
+
+  local PDF_LIST=$(ls *.pdf)
+
+  if which pdftk > /dev/null 2>&1
+  then
+    echo
+    echo -e "${LTCYAN}Replacing PDF Covers ..."
+    echo -e "${LTCYAN}----------------------------------------------------------------${NC}"
+
+    for PDF in ${PDF_LIST}
+    do
+      if echo ${PDF} | grep -q -E '^LAB|^LECTURE'
+      then
+        local PDF_BACKUP=$(echo ${PDF} | sed "s/\.pdf/\.backup\.pdf/g")
+        local PDF_NO_COVER=$(echo ${PDF} | sed "s/\.pdf/\.no_cover\.pdf/g")
+        local PDF_OUTPUT=${PDF}
+
+        echo -e "${LTBLUE}  -${PDF}${NC}"
+        echo -e "${LTGREEN}  COMMAND: ${GRAY} cp ${PDF} ${PDF_BACKUP}${NC}"
+        cp ${PDF} ${PDF_BACKUP}
+
+        #---- cut off cover
+        echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk A=${PDF} cat A2-end output ${PDF_NO_COVER}${NC}"
+        pdftk A=${PDF} cat A2-end output ${PDF_NO_COVER}
+
+        #---- add new cover to manual
+        if echo ${PDF} | grep -q "^LAB"
+        then
+          if ! [ -z ${NEW_LAB_MANUAL_COVER} ]
+          then
+            echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk A=${NEW_LAB_MANUAL_COVER} B=${PDF_NO_COVER} cat output ${PDF_OUTPUT}${NC}"
+            pdftk A=${NEW_LAB_MANUAL_COVER} B=${PDF_NO_COVER} cat output ${PDF_OUTPUT}
+          else
+            echo -e "${LTBLUE}   (no new lab manual cover found)${NC}"
+          fi
+        elif echo ${PDF} | grep -q "^LECTURE"
+        then
+          if ! [ -z ${NEW_LECTURE_MANUAL_COVER} ]
+          then
+            echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk A=${NEW_LECTURE_MANUAL_COVER} B=${PDF_NO_COVER} cat output ${PDF_OUTPUT}${NC}"
+            pdftk A=${NEW_LECTURE_MANUAL_COVER} B=${PDF_NO_COVER} cat output ${PDF_OUTPUT}
+          else
+            echo -e "${LTBLUE}   (no new lecture manual cover found)${NC}"
+          fi
+        fi
+
+        #---- remove unneeded PDF files
+        echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF_BACKUP}${NC}"
+        rm -f ${PDF_BACKUP}
+        echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF_NO_COVER}${NC}"
+        rm -f ${PDF_NO_COVER}
+        echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${NEW_LAB_MANUAL_COVER}${NC}"
+        rm -f ${NEW_LAB_MANUAL_COVER}
+        echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${NEW_LECTURE_MANUAL_COVER}${NC}"
+        rm -f ${NEW_LECTURE_MANUAL_COVER}
+      fi
+    done
+
+    echo
+  else
+    echo -e "${ORANGE}WARNING: The pdftk command does not seem to be present.${NC}"
+    echo -e "${ORANGE}         Continuing without replacing PDF covers ...${NC}"
+  fi
+}
+
+
+cover_logo_pdfs() {
+  # Function must be called with an argument for the logo type
+  # Example:  cover_logo_pdfs Academic
+  #
+  # The logo template pdf must be named: logo-${1}.pdf
+  # ( Where ${1} is Academic in the example above: i.e. logo-Academic.pdf )
+
+  if [ -z ${1} ]
+  then
+    echo -e "${LTRED}ERROR: Function logo_pdfs was called without an argument${NC}"
+    return 1
+  fi
+
+  local LOGO=${1}
+  local PDF_TEMPLATE="${PDF_WATERMARK_TEMPLATE_DIR}/logo-${LOGO}.pdf"
+
+  case ${LOGO}
+  in
+    none|NONE|None)
+      echo -e "${LTBLUE}(Logoing disabled in config file. Skipping ...)${NC}"
+      echo
+    ;;
+    *)
+      cd ${COURSE_TMP_DIR}
+  
+      local PDF_LIST=$(ls *.pdf)
+  
+      if which pdftk > /dev/null 2>&1
+      then
+        echo
+        echo -e "${LTCYAN}Logoing PDFs ..."
+        echo -e "${LTCYAN}----------------------------------------------------------------${NC}"
+  
+        for PDF in ${PDF_LIST}
+        do
+          if [ -e ${PDF_TEMPLATE} ]
+          then
+            if echo ${PDF} | grep -q -E '^LAB|^LECTURE'
+            then
+              local PDF_BACKUP=$(echo ${PDF} | sed "s/\.pdf/\.backup\.pdf/g")
+              local PDF_COVER_ONLY=$(echo ${PDF} | sed "s/\.pdf/\.cover_only\.pdf/g")
+              local PDF_NO_COVER=$(echo ${PDF} | sed "s/\.pdf/\.no_cover\.pdf/g")
+              local PDF_COVER_ONLY_WITH_LOGO=$(echo ${PDF} | sed "s/\.pdf/\.cover_only_with_logo\.pdf/g")
+              #local PDF_OUTPUT=$(echo ${PDF} | sed "s/\.pdf/\.${LOGO}\.pdf/g")
+              local PDF_OUTPUT=${PDF}
+
+              echo -e "${LTBLUE}  -${PDF}${NC}"
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} cp ${PDF} ${PDF_BACKUP}${NC}"
+              cp ${PDF} ${PDF_BACKUP}
+
+              #---- cut off cover
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk A=${PDF} cat A1 output ${PDF_COVER_ONLY}${NC}"
+              pdftk A=${PDF} cat A1 output ${PDF_COVER_ONLY}
+
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk A=${PDF} cat A2-end output ${PDF_NO_COVER}${NC}"
+              pdftk A=${PDF} cat A2-end output ${PDF_NO_COVER}
+
+              #---- apply new cover graphic
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF_COVER_ONLY} stamp ${PDF_TEMPLATE} output ${PDF_COVER_ONLY_WITH_LOGO}${NC}"
+              pdftk ${PDF_COVER_ONLY} stamp ${PDF_TEMPLATE} output ${PDF_COVER_ONLY_WITH_LOGO}
+              
+              #---- recombine logoed cover with manual
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk A=${PDF_COVER_ONLY_WITH_LOGO} B=${PDF_NO_COVER} cat output ${PDF_OUTPUT}${NC}"
+              pdftk A=${PDF_COVER_ONLY_WITH_LOGO} B=${PDF_NO_COVER} cat output ${PDF_OUTPUT}
+   
+              #---- remove unneeded PDF files
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF_BACKUP}${NC}"
+              rm -f ${PDF_BACKUP}
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF_COVER_ONLY}${NC}"
+              rm -f ${PDF_COVER_ONLY}
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF_COVER_ONLY_WITH_LOGO}${NC}"
+              rm -f ${PDF_COVER_ONLY_WITH_LOGO}
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF_NO_COVER}${NC}"
+              rm -f ${PDF_NO_COVER}
+            fi
+          else
+            echo -e "${ORANGE}WARNING: The logo template does not seem to be present.${NC}"
+            echo -e "${ORANGE}         Continuing without logoing the PDF ...${NC}"
+          fi
+        done
+  
+        echo
+      else
+        echo -e "${ORANGE}WARNING: The pdftk command does not seem to be present.${NC}"
+        echo -e "${ORANGE}         Continuing without logoing the PDF ...${NC}"
+      fi
+    ;;
+  esac
+}
+
+
 watermark_pdfs() {
   # Function must be called with an argument for the watermark type
   # Example:  watermark_pdfs Internal
@@ -98,9 +260,13 @@ watermark_pdfs() {
           then
             if echo ${PDF} | grep -q -E '^LAB|^LECTURE'
             then
+              local PDF_OUTPUT=$(echo ${PDF} | sed "s/\.pdf/\.${WATERMARK}\.pdf/g")
+
               echo -e "${LTBLUE}  -${PDF}${NC}"
-              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multistamp ${PDF_TEMPLATE} output $(echo ${PDF} | sed "s/\.pdf/\.${WATERMARK}\.pdf/g")${NC}"
-              pdftk ${PDF} multistamp ${PDF_TEMPLATE} output $(echo ${PDF} | sed "s/\.pdf/\.${WATERMARK}\.pdf/g")
+              #echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multistamp ${PDF_TEMPLATE} output ${PDF_OUTPUT}${NC}"
+              #pdftk ${PDF} multistamp ${PDF_TEMPLATE} output ${PDF_OUTPUT}
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multibackground ${PDF_TEMPLATE} output ${PDF_OUTPUT}${NC}"
+              pdftk ${PDF} multibackground ${PDF_TEMPLATE} output ${PDF_OUTPUT}
    
               echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF}${NC}"
               rm -f ${PDF}

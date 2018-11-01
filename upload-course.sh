@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# version: 1.1.0
-# data: 20180816
+# version: 2.0.0
+# data: 20181101
 
 source ./include/colors.sh
 source ./include/usage.sh
@@ -105,6 +105,20 @@ main() {
   esac
 
   gather_files_to_upload
+
+  case ${REPLACE_PDF_COVER_PAGES}
+  in
+    Y|y|Yes|YES)
+      replace_pdf_cover_pages
+    ;;
+  esac
+
+  case ${COVER_LOGO_PDFS}
+  in
+    Y|y|Yes|YES)
+      cover_logo_pdfs ${PDF_COVER_LOGO_TO_USE}
+    ;;
+  esac
 
   case ${WATERMARK_PDFS}
   in

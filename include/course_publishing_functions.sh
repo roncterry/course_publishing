@@ -1,7 +1,7 @@
 # Functions for the course publishing scripts
 #
-# version: 2.0.0
-# date: 20181101
+# version: 2.0.1
+# date: 20181204
 #
 #  echo -e "${LTGREEN}COMMAND: ${GRAY}${NC}"
 
@@ -263,10 +263,10 @@ watermark_pdfs() {
               local PDF_OUTPUT=$(echo ${PDF} | sed "s/\.pdf/\.${WATERMARK}\.pdf/g")
 
               echo -e "${LTBLUE}  -${PDF}${NC}"
-              #echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multistamp ${PDF_TEMPLATE} output ${PDF_OUTPUT}${NC}"
-              #pdftk ${PDF} multistamp ${PDF_TEMPLATE} output ${PDF_OUTPUT}
-              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multibackground ${PDF_TEMPLATE} output ${PDF_OUTPUT}${NC}"
-              pdftk ${PDF} multibackground ${PDF_TEMPLATE} output ${PDF_OUTPUT}
+              echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multistamp ${PDF_TEMPLATE} output ${PDF_OUTPUT}${NC}"
+              pdftk ${PDF} multistamp ${PDF_TEMPLATE} output ${PDF_OUTPUT}
+              #echo -e "${LTGREEN}  COMMAND: ${GRAY} pdftk ${PDF} multibackground ${PDF_TEMPLATE} output ${PDF_OUTPUT}${NC}"
+              #pdftk ${PDF} multibackground ${PDF_TEMPLATE} output ${PDF_OUTPUT}
    
               echo -e "${LTGREEN}  COMMAND: ${GRAY} rm -f ${PDF}${NC}"
               rm -f ${PDF}

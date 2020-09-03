@@ -1,7 +1,7 @@
 # Functions for the course publishing scripts
 #
-# version: 2.0.1
-# date: 20181204
+# version: 2.1.0
+# date: 20200903
 #
 #  echo -e "${LTGREEN}COMMAND: ${GRAY}${NC}"
 
@@ -351,6 +351,17 @@ sftp_upload_course_files() {
 
   echo -e "${LTGREEN}COMMAND: ${GRAY} cd ${COURSE_TMP_DIR}${NC}"
   cd ${COURSE_TMP_DIR}
+  if ! grep -q "${COURSE_UPLOAD_SERVER}" ~/.ssh/known_hosts
+  then
+    echo -e "${LTCYAN}(downloading the server's host key ...)${NC}"
+    if host "${COURSE_UPLOAD_SERVER}" > /dev/null 2>&1
+    then
+      ssh-keyscan "${COURSE_UPLOAD_SERVER}",$(host "${COURSE_UPLOAD_SERVER}" | awk '{ print $4 }') >> ~/.ssh/known_hosts
+    else
+      ssh-keyscan "${COURSE_UPLOAD_SERVER}" >> ~/.ssh/known_hosts
+    fi
+    echo
+  fi
   echo -e "${LTGREEN}COMMAND: ${GRAY} ${SFTP_CMD} ${USER_NAME}@${COURSE_UPLOAD_SERVER}; mkdir ${COURSE_UPLOAD_DIR}; cd ${COURSE_UPLOAD_DIR}; put -r *${NC}"
   export SSHPASS=${USER_PASS}
   ${SFTP_CMD} ${USER_NAME}@${COURSE_UPLOAD_SERVER} << END_OF_SFTP_SCRIPT
